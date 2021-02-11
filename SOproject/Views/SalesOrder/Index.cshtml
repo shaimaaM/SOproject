@@ -1,0 +1,162 @@
+﻿
+
+<div class="row">
+    <h3 class="col-sm-10"> Sales Orders</h3>
+
+</div>
+<br />
+<br />
+<div class="row">
+    <div class="col-4">
+        <input type="text" class="form-control" placeholder="Search..." oninput="loadApi();" id="generalSearch" />
+    </div>
+    @*<div class="col-4">
+        <a id="GetSOdata" class="form-control btn btn-sm btn-outline-primary" >Get Data </a>
+    </div>*@
+</div>
+<br />
+<br />
+<div id="SalesOrdertGrid" style="width:100%;" class="ag-theme-balham"></div>
+
+<script>
+
+    var columnDefs = [
+        {
+            headerName: "SO#", field: "no", editable: false, cellClass: "text-center",
+            cellRenderer: function (params) {
+
+                if (params.data && params.data != undefined && params.data.no != null && params.data.no != "" && params.data.no != undefined) {
+                    return `<a href="/SalesOrder/_Details?soNo=No eq '${params.data.no}'" modelsize="modal-xl" ajaxType="GET" class="openModal"> ${params.data.no} </a>&nbsp;`
+                                    //${params.data.soEncryptUrl}
+                }
+                else {
+                    return '';
+                }
+            }
+        },      
+        {
+            headerName: "Customer Name", field: "sell_to_Customer_Name"
+        },
+        {
+            headerName: "Description", field: "posting_Description"
+        },
+        {
+            headerName: "Order Date", field: "order_Date", cellRenderer: (data) => {
+                return data.value ? (new Date(data.value)).toLocaleDateString() : '';
+            }
+        },
+        {
+            headerName: "Shipment Date", field: "shipment_Date", cellRenderer: (data) => {
+                return data.value ? (new Date(data.value)).toLocaleDateString() : '';
+            }
+        },
+        {
+            headerName: "Phone Number", field: "phone_No"
+        },
+        {
+            headerName: "Ammount", field: "cRM_Sales_Amount"
+        },
+     
+        //{
+        //    headerName: 'Action', editable: false, suppressSizeToFit: true,
+        //    cellRenderer: function (params) {
+        //        if (params.data) {
+        //            return `<a href="/Product/_Edit/${params.data.id}" ajaxType="GET" class="btn btn-sm btn-outline-primary openModal">Edit</a>&nbsp;
+        //                <a href="/Product/Delete/${params.data.id}" ajaxType="GET" confirmButtonText="Yes, Cancel it!" msgHeader="Canceled!"  class="btn btn-sm btn-outline-danger btnDelete confirm">Delete</a>&nbsp;
+        //               <a href="/Product/_Details/${params.data.id}"  ajaxType="GET"  class="btn btn-sm btn-outline-success openModal">Details</a>`;
+
+        //        }
+        //    }
+        //}
+    ];
+
+
+    var gridOptions = {
+        columnDefs: columnDefs,
+        rowSelection: 'multiple',
+        domLayout: 'autoHeight',
+
+        defaultColDef: {
+            editable: false,
+            enableRowGroup: true,
+            enablePivot: true,
+            enableValue: true,
+            sortable: true,
+            resizable: true,
+            filter: true,
+            flex: 1
+        },
+        suppressRowClickSelection: true,
+        pagination: true,
+        getRowHeight: function (params) {
+            return 35;
+        },
+        rowModelType: 'infinite',
+        animateRows: true,
+        paginationPageSize: 10,
+        cacheOverflowSize: 2,
+        maxConcurrentDatasourceRequests: 2,
+        infiniteInitialRowCount: 1,
+        maxBlocksInCache: 2,
+        cacheBlockSize: 3,
+        enableColResize: true,
+        suppressMenuHide: true,
+        onGridReady: function () {
+            gridOptions.api.sizeColumnsToFit();
+        },
+    };
+    var dataSourceTDBest = '';
+    var dataSourceApi = '';
+
+   // $("#GetSOdata").on("click", function () {
+    document.addEventListener('DOMContentLoaded', function () {
+        var gridDiv = document.querySelector('#SalesOrdertGrid');
+        new agGrid.Grid(gridDiv, gridOptions);
+
+        dataSourceTDBest = {
+            //  rowCount: null, // behave as infinite scroll
+            getRows: function (params) {
+                var model = {
+                    PageNo: gridOptions.api.paginationGetCurrentPage(),
+                    PageSize: gridOptions.paginationPageSize,
+                   // Number: document.getElementById('generalSearch').value,
+                  //  Number: gridOptions.columnDefs.Number
+                };
+                loadPaginatedGridWithDelay('/SalesOrder/IndexDBAjax/', 'POST', model, gridOptions, params);
+            },
+            getRowHeight: function (params) {
+                return 35;
+            },
+        };
+        gridOptions.api.showNoRowsOverlay();
+        gridOptions.api.setDatasource(dataSourceTDBest);
+    });
+
+    
+    function refresh(e) {
+        gridOptions.api.setDatasource(dataSourceTest);
+    }
+
+    function loadApi(e) {
+      //  var gridDiv = document.querySelector('#SalesOrdertGrid');
+      //  new agGrid.Grid(gridDiv, gridOptions);
+
+        dataSourceApi = {
+            getRows: function (params) {
+                var model = {
+                    PageNo: gridOptions.api.paginationGetCurrentPage(),
+                    PageSize: gridOptions.paginationPageSize,
+                    Number: document.getElementById('generalSearch').value,
+                    //  Number: gridOptions.columnDefs.Number
+                };
+                loadPaginatedGridWithDelay('/SalesOrder/IndexAjax/', 'POST', model, gridOptions, params);
+            },
+            getRowHeight: function (params) {
+                return 35;
+            },
+        };
+        gridOptions.api.showNoRowsOverlay();
+        gridOptions.api.setDatasource(dataSourceApi);
+    }
+</script>
+

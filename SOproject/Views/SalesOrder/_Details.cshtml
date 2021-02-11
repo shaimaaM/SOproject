@@ -1,0 +1,153 @@
+﻿@model SOproject.CustomModel.SalesOrderCM
+
+<div class="modal-header">
+    <h5 class="modal-title" id="exampleModalLabel">Sales Orders Lines </h5>
+    @*<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>*@
+    <button id="save" type="button" class="col-2 form-control btn btn-sm btn-outline-primary rounded-right">Save to Database </button>
+
+</div>
+
+<div class="modal-body">
+    <input type="hidden" id="currentSalesOrdersNo" value="@Model.Number" />
+    <br />
+    <br />
+    <div class="container">
+        <div id="SOListGrid" style="width:100%;" class="ag-theme-balham"></div>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="float-right">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>&nbsp;
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+
+    var columnDefs = [
+        {
+            headerName: "Number", field: "no", editable: false, cellClass: "text-center",
+
+        },
+        //{
+        //    headerName: "Port", field: "port", editable: false, cellClass: "text-center",
+
+        //},
+        {
+            headerName: "Description", field: "description"
+        },
+        {
+            headerName: "Quantity", field: "quantity",
+        },
+        //{
+        //    headerName: "Status", field: "status",
+        //},
+        {
+            headerName: "Job Number", field: "job_No",
+        },
+        {
+            headerName: "Unit Price", field: "unit_Price"
+        },
+
+    ];
+
+
+    var gridOptions = {
+        columnDefs: columnDefs,
+        rowSelection: 'multiple',
+        domLayout: 'autoHeight',
+
+        defaultColDef: {
+            editable: false,
+            enableRowGroup: true,
+            enablePivot: true,
+            enableValue: true,
+            sortable: true,
+            resizable: true,
+            filter: true,
+            flex: 1
+        },
+        suppressRowClickSelection: true,
+        pagination: true,
+        getRowHeight: function (params) {
+            return 35;
+        },
+        rowModelType: 'infinite',
+        animateRows: true,
+        paginationPageSize: 10,
+        cacheOverflowSize: 2,
+        maxConcurrentDatasourceRequests: 2,
+        infiniteInitialRowCount: 1,
+        maxBlocksInCache: 2,
+        cacheBlockSize: 3,
+        enableColResize: true,
+        suppressMenuHide: true,
+        onGridReady: function () {
+            gridOptions.api.sizeColumnsToFit();
+        },
+    };
+    var dataSourceTest = '';
+    var dataSourceSave = '';
+    //   document.addEventListener('DOMContentLoaded', function () {
+    $(document).ready(function () {
+        var gridDiv = document.querySelector('#SOListGrid');
+        new agGrid.Grid(gridDiv, gridOptions);
+
+        dataSourceTest = {
+            //  rowCount: null, // behave as infinite scroll
+            getRows: function (params) {
+                var model = {
+                    PageNo: gridOptions.api.paginationGetCurrentPage(),
+                    PageSize: gridOptions.paginationPageSize,
+                    Number: document.getElementById('currentSalesOrdersNo').value,
+
+                };
+                loadPaginatedGridWithDelay('/SalesOrder/DetailsAjax/', 'POST', model, gridOptions, params);
+            },
+            getRowHeight: function (params) {
+                return 35;
+            },
+        };
+        gridOptions.api.showNoRowsOverlay();
+        gridOptions.api.setDatasource(dataSourceTest);
+    });
+
+    function refresh(e) {
+        gridOptions.api.setDatasource(dataSourceTest);
+    }
+
+    var NO = document.getElementById('currentSalesOrdersNo').value;
+
+    $('#save').click(function () {
+        gridOptions.api.showLoadingOverlay();
+        $.ajax({
+            url: "/SalesOrder/SaveToDB/",
+            dataType: "json",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(NO),
+            success: function (json) {
+                gridOptions.api.hideOverlay();
+                if (json.status == 1) {
+                    ShowMessage(json.msg, json.color, json.management);
+                    $("#OpenModal").modal('hide');
+                } else if (json.status == 0) {
+                    ShowMessage(json.msg, json.color, json.management);
+                } else if (json.status == -1) {
+                    ShowMessage(json.msg, json.color, json.management);
+                }
+                jQuery.isFunction(refresh());
+
+            }, error: function (json) {
+            }
+        });
+    });
+</script>
