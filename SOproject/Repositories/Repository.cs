@@ -41,6 +41,8 @@ namespace SOproject.Repositories
         {
             return _context.Set<TEntity>().Where(predicate).AsQueryable();
         }
+
+      
         public IEnumerable<TEntity> Get(Expression<Func<TEntity, bool>> predicate)
         {
             return _context.Set<TEntity>().Where(predicate);

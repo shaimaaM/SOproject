@@ -44,21 +44,19 @@ namespace SOproject.Controllers
             var list = _salesOrderRepository.GetAllAsyncPage(model.PageNo,model.PageSize);
             var list2 = new List<SlaesOrderHeaderAndLines.Value>();
 
-            foreach (var item in list.Item1)
+          
+            list2 = list.Item1.Select(c => new SlaesOrderHeaderAndLines.Value()
             {
-               var newSO = new SlaesOrderHeaderAndLines.Value()
-                {
-                   No = item.Number,
-                  Sell_to_Customer_Name = item.CustomerName,
-                  Posting_Description = item.Description,
-                  Order_Date = item.OrderDate.ToShortDateString(),
-                  Phone_No = item.PhoneNumber,
-                  Shipment_Date = item.ShipmentDate.ToShortDateString(),
-                  CRM_Cost_Amount = item.Ammount.ToString(),
-                  SalesOrderSalesLines = null
-               };
-                list2.Add(newSO);
-            }
+                No = c.Number,
+                Sell_to_Customer_Name = c.CustomerName,
+                Posting_Description = c.Description,
+                Order_Date = c.OrderDate.ToShortDateString(),
+                Phone_No = c.PhoneNumber,
+                Shipment_Date = c.ShipmentDate.ToShortDateString(),
+                CRM_Cost_Amount = c.Ammount.ToString(),
+                SalesOrderSalesLines = null
+            }).ToList();
+
             return Json(new
             {
                 TotalItems = list.Item2,
@@ -100,26 +98,39 @@ namespace SOproject.Controllers
 
         public async Task<IActionResult> DetailsAjax([FromBody]SalesOrderCM model)
         {
-            var resultt = await _client.GetAsync($@"{_client.BaseAddress}/SalesOrder?$filter={model.Number}&$expand=SalesOrderSalesLines");
-            var NotofocationList = JsonConvert.DeserializeObject<SlaesOrderHeaderAndLines.Rootobject>(await resultt.Content.ReadAsStringAsync());
-            var count = NotofocationList.value[0].SalesOrderSalesLines.Count();
-
+            var data =new List<SlaesOrderHeaderAndLines.Salesordersalesline>();
+            var count = 0;
+            if (_salesOrderRepository.Find(model.Number) != null)
+            {
+                var all = _salesOrderLinesRepository.GetQueryable(c => c.SalesOrder.Number.Equals(model.Number)) ;
+                data = all.Select(v => new SlaesOrderHeaderAndLines.Salesordersalesline()
+                {
+                    No = v.Number,
+                    Description = v.Description,
+                    Quantity = v.Quantity,
+                    Job_No = v.JobNumber,
+                    Unit_Price = v.UnitPrice
+                }).ToList();
+                count = data.Count();
+            }
+            else { 
+                var resultt = await _client.GetAsync($@"{_client.BaseAddress}/SalesOrder?$filter=No eq '{model.Number}'&$expand=SalesOrderSalesLines");
+                var NotofocationList = JsonConvert.DeserializeObject<SlaesOrderHeaderAndLines.Rootobject>(await resultt.Content.ReadAsStringAsync());
+                count = NotofocationList.value[0].SalesOrderSalesLines.Count();
+                data = NotofocationList.value[0].SalesOrderSalesLines.ToList();
+            }          
             return Json(new
             {
                 TotalItems = count,
-                Data = NotofocationList.value[0].SalesOrderSalesLines
-            });
+                Data = data
+            }) ;
         }
 
         [HttpPost]
         public async Task<IActionResult> SaveToDB([FromBody]string No)
         {
-            var getapi = await _client.GetAsync($@"{_client.BaseAddress}/SalesOrder?$filter={No}&$expand=SalesOrderSalesLines");
-            var SOLineList = JsonConvert.DeserializeObject<SlaesOrderHeaderAndLines.Rootobject>(await getapi.Content.ReadAsStringAsync());
-            var SO = SOLineList.value[0];
-            var SOLines = SOLineList.value[0].SalesOrderSalesLines.ToList();
-
-            if (_salesOrderRepository.Find(SO.No) != null)
+            
+            if (_salesOrderRepository.Find(No) != null)
             {
                 return Json(new
                 {
@@ -131,6 +142,11 @@ namespace SOproject.Controllers
             }
             else
             {
+                var getapi = await _client.GetAsync($@"{_client.BaseAddress}/SalesOrder?$filter=No eq '{No}'&$expand=SalesOrderSalesLines");
+                var SOLineList = JsonConvert.DeserializeObject<SlaesOrderHeaderAndLines.Rootobject>(await getapi.Content.ReadAsStringAsync());
+                var SO = SOLineList.value[0];
+                var SOLines = SOLineList.value[0].SalesOrderSalesLines.ToList();
+
                 var res =  await _salesOrderRepository.AddAsync(new SalesOrder()
                 {
                     Number = SO.No,

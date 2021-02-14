@@ -26,7 +26,7 @@
             cellRenderer: function (params) {
 
                 if (params.data && params.data != undefined && params.data.no != null && params.data.no != "" && params.data.no != undefined) {
-                    return `<a href="/SalesOrder/_Details?soNo=No eq '${params.data.no}'" modelsize="modal-xl" ajaxType="GET" class="openModal"> ${params.data.no} </a>&nbsp;`
+                    return `<a href="/SalesOrder/_Details?soNo=${params.data.no}" modelsize="modal-xl" ajaxType="GET" class="openModal"> ${params.data.no} </a>&nbsp;`
                                     //${params.data.soEncryptUrl}
                 }
                 else {

@@ -40,17 +40,17 @@ public class Salesordersalesline
 
     public string Description { get; set; }
    
-    public int Quantity { get; set; }
+    public decimal Quantity { get; set; }
   
-    public int Unit_Price { get; set; }
+    public decimal Unit_Price { get; set; }
     public bool Tax_Liable { get; set; }
  
     public int Line_Amount { get; set; }
-    public int Amount_Including_VAT { get; set; }
+    public decimal Amount_Including_VAT { get; set; }
 
     public int Quantity_Shipped { get; set; }
     public int Qty_to_Invoice { get; set; }
-    public int Quantity_Invoiced { get; set; }
+    public decimal Quantity_Invoiced { get; set; }
    
     public string Shipment_Date { get; set; }
   
